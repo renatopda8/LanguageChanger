@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Forms;
-using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
 namespace LanguageChanger
@@ -23,6 +22,8 @@ namespace LanguageChanger
 
         private void Initialize()
         {
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             CbLanguage.ItemsSource = Languages;
             CbLanguage.DisplayMemberPath = nameof(LanguageChanger.Language.Name);
             CbLanguage.SelectedValuePath = nameof(LanguageChanger.Language.GameTag);
@@ -54,8 +55,8 @@ namespace LanguageChanger
             {
                 return FindLeaguePath();
             }
-            Application.Current.Shutdown();
-            throw new Exception("Settings file not found");
+            Environment.Exit(0);
+            throw new FileNotFoundException("Settings file not found", SettingsFile);
         }
 
         private static FolderBrowserDialog _folderBrowser;
