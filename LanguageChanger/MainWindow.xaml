@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LanguageChanger"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="Language Changer" Height="140" Width="350" ResizeMode="NoResize" Icon="LanguageChanger.ico">
     <Grid>
-        
+        <ComboBox x:Name="CbLanguage" Margin="50,25,50,0" Height="24" VerticalAlignment="Top"/>
+        <Button x:Name="BtSave" Content="Save" Margin="120,0,120,15" Height="22" VerticalAlignment="Bottom" Click="BtSave_Click"/>
     </Grid>
 </Window>
