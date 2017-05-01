@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Forms;
+using IWshRuntimeLibrary;
+using File = System.IO.File;
 using MessageBox = System.Windows.MessageBox;
 
 namespace LanguageChanger
@@ -43,20 +46,76 @@ namespace LanguageChanger
             SettingsLanguage = Languages.First(l => l.GameTag.Equals(match.Groups[1].Value));
         }
 
+        private static bool IsSettingsFileAt(string folder)
+        {
+            return !string.IsNullOrWhiteSpace(folder) && File.Exists($"{folder}\\{SettingsFile}");
+        }
+
         private static string FindLeaguePath()
         {
-            FolderBrowser.ShowDialog();
-            if (File.Exists($"{FolderBrowser.SelectedPath}\\{SettingsFile}"))
+            //Verifica se existe um atalho para League of Legends na área de trabalho
+            string desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string[] leagueShortcut = Directory.GetFiles(desktopFolder, "League of Legends.lnk");
+            if (leagueShortcut.Any())
             {
-                return FolderBrowser.SelectedPath;
+                WshShell shell = new WshShell(); //Create a new WshShell Interface
+                IWshShortcut link = shell.CreateShortcut(leagueShortcut.First()) as IWshShortcut; //Link the interface to our shortcut
+
+                string leagueFolder = Path.GetDirectoryName(link?.TargetPath);
+                if (IsSettingsFileAt(leagueFolder))
+                {
+                    return leagueFolder;
+                }
             }
-            if (MessageBox.Show("Settings file not found. Do you want to select a new folder?", "Error",
-                MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+
+            //Busca por arquivos de configuração para cada driver do sistema para o caminho padrão de instalação
+            string pathRoot = Path.GetPathRoot(Environment.SystemDirectory);
+            List<DriveInfo> driveInfos = DriveInfo.GetDrives().Where(di => DriveType.Fixed.Equals(di.DriveType)).ToList();
+            List<string> potencialFolders = driveInfos.OrderByDescending(di => pathRoot.StartsWith(di.Name))
+                .ThenBy(di => di.Name).Select(driveInfo => $"{driveInfo.Name}Riot Games\\League of Legends\\")
+                .Where(IsSettingsFileAt).ToList();
+            if (potencialFolders.Any())
             {
-                return FindLeaguePath();
+                if (potencialFolders.Count == 1)
+                {
+                    return potencialFolders.First();
+                }
+
+                //Caso mais de um diretório seja encontrado, pergunta ao usuário
+                foreach (string folder in potencialFolders)
+                {
+                    if (MessageBox.Show($"Is '{folder}' your League of Legends installation folder?",
+                            "League of Legends folder", MessageBoxButton.YesNo, MessageBoxImage.Question,
+                            MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                    {
+                        return folder;
+                    }
+                }
             }
-            Environment.Exit(0);
-            throw new FileNotFoundException("Settings file not found", SettingsFile);
+
+            while (true)
+            {
+                //Se nenhuma das outras formas encontrar um diretório possível, o usuário deve selecionar
+                FolderBrowser.ShowDialog();
+                if (IsSettingsFileAt(FolderBrowser.SelectedPath))
+                {
+                    return FolderBrowser.SelectedPath;
+                }
+
+                string selectedFolder = $"{FolderBrowser.SelectedPath}\\League of Legends";
+                if (IsSettingsFileAt(selectedFolder))
+                {
+                    return selectedFolder;
+                }
+
+                if (MessageBox.Show("Settings file 'LeagueClientSettings.yaml' not found. Do you want to select a new folder?", "Error",
+                        MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                {
+                    continue;
+                }
+
+                Environment.Exit(0);
+            }
         }
 
         private static FolderBrowserDialog _folderBrowser;
@@ -68,7 +127,7 @@ namespace LanguageChanger
             => _folderBrowser ?? (_folderBrowser = new FolderBrowserDialog
                {
                    ShowNewFolderButton = false,
-                   Description = "League of Legends folder"
+                   Description = Properties.Resources.MainWindow_FolderBrowser_Select_your_League_of_Legends_folder
                });
 
         private Language _settingsLanguage;
@@ -77,7 +136,7 @@ namespace LanguageChanger
         /// </summary>
         private Language SettingsLanguage
         {
-            get { return _settingsLanguage; }
+            get => _settingsLanguage;
             set
             {
                 _settingsLanguage = value;
@@ -95,7 +154,7 @@ namespace LanguageChanger
         /// <summary>
         /// League of Legends path
         /// </summary>
-        private static string LeaguePath => _leaguePath ?? (_leaguePath = FindLeaguePath());        
+        private static string LeaguePath => _leaguePath ?? (_leaguePath = FindLeaguePath());
 
         /// <summary>
         /// Settings file
@@ -113,7 +172,7 @@ namespace LanguageChanger
         /// </summary>
         public string Settings
         {
-            get { return _settings ?? (_settings = File.ReadAllText(SettingsPath)); }
+            get => _settings ?? (_settings = File.ReadAllText(SettingsPath));
             private set
             {
                 _settings = value;

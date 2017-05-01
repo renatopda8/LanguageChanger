@@ -59,5 +59,14 @@ namespace LanguageChanger.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select your League of Legends folder.
+        /// </summary>
+        internal static string MainWindow_FolderBrowser_Select_your_League_of_Legends_folder {
+            get {
+                return ResourceManager.GetString("MainWindow_FolderBrowser_Select_your_League_of_Legends_folder", resourceCulture);
+            }
+        }
     }
 }

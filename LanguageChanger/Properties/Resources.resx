@@ -114,4 +114,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="MainWindow_FolderBrowser_Select_your_League_of_Legends_folder" xml:space="preserve">
+    <value>Select your League of Legends folder</value>
+  </data>
 </root>
