@@ -212,7 +212,7 @@ namespace LanguageChanger
             string oldLanguage = SettingsLanguage.Name;
             Settings = LocaleRegex.Replace(Settings, $"locale: \"{CbLanguage.SelectedValue}\"");
             File.WriteAllText(SettingsPath, Settings);
-            MessageBox.Show( $"Language changed from {oldLanguage} to {SettingsLanguage.Name}.", "Sucess", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show( $"Language changed from {oldLanguage} to {SettingsLanguage.Name}.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
