@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -156,6 +157,12 @@ namespace LanguageChanger
         /// </summary>
         private static string LeaguePath => _leaguePath ?? (_leaguePath = FindLeaguePath());
 
+        private static string _leagueClientPath;
+        /// <summary>
+        /// League of Legends client path
+        /// </summary>
+        private static string LeagueClientPath => _leagueClientPath ?? (_leagueClientPath = $"{LeaguePath}\\LeagueClient.exe");
+
         /// <summary>
         /// Settings file
         /// </summary>
@@ -207,12 +214,65 @@ namespace LanguageChanger
                 new Language {Name = "日本語", GameTag = "ja_JP"}
             });
 
+        /// <summary>
+        /// Save the language changes to the League of Legends settings file
+        /// </summary>
+        private void Save()
+        {
+            string successMessage;
+
+            try
+            {
+                string oldLanguage = SettingsLanguage.Name;
+                Settings = LocaleRegex.Replace(Settings, $"locale: \"{CbLanguage.SelectedValue}\"");
+                File.WriteAllText(SettingsPath, Settings);
+
+                successMessage = $"Language changed from {oldLanguage} to {SettingsLanguage.Name}.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to change the language: {ex.Message}.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            bool existsLeagueClient = File.Exists(LeagueClientPath);
+            if (existsLeagueClient)
+            {
+                successMessage += " To confirm the change, the League of Legends client will now be executed.";
+            }
+            
+            MessageBox.Show(successMessage, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            //Após a alteração, é necessário executar o LeagueClient.exe para efetivar as mudanças.
+            //O atalho normal do LoL executa o RiotClientServices.exe antes e geralmente ele reseta as configurações.
+            if (existsLeagueClient)
+            {
+                try
+                {
+                    Process.Start(LeagueClientPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to launch the League of Legends Client: {ex.Message}.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    CloseApplication();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Closes the applications
+        /// </summary>
+        private void CloseApplication()
+        {
+            Environment.Exit(0);
+        }
+
         private void BtSave_Click(object sender, RoutedEventArgs e)
         {
-            string oldLanguage = SettingsLanguage.Name;
-            Settings = LocaleRegex.Replace(Settings, $"locale: \"{CbLanguage.SelectedValue}\"");
-            File.WriteAllText(SettingsPath, Settings);
-            MessageBox.Show( $"Language changed from {oldLanguage} to {SettingsLanguage.Name}.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            Save();
         }
     }
 }
